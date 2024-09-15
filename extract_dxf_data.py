@@ -41,7 +41,7 @@ def count_lights_in_group(dxf_file, group_name):
         if entity.dxftype() == 'INSERT':  # Only extract blocks
             # print(entity.dxf.name)
             entity_name = entity.dxf.name
-            if entity_name.startswith("SYM_Light_"):
+            if entity_name.startswith("SYM_Light"):
                 if entity_name in light_count:
                     light_count[entity_name] = light_count[entity_name]+1
                 else:
@@ -52,18 +52,15 @@ def count_lights_in_group(dxf_file, group_name):
 
 def make_table(cost_by_group):
     df = pandas.DataFrame(cost_by_group).T.reset_index().rename(columns={'index': 'Room'})
-    
     unit_costs = load_json("config/bulb_cost_config.json")
     unit_costs = pandas.DataFrame(unit_costs).T.reset_index().rename(columns={'index': 'Room'})
     unit_costs.columns = unit_costs.iloc[0]   # Make the first row the header
     unit_costs = unit_costs[1:].reset_index(drop=True)
     unit_costs.rename(columns={"entity_name": "Room"})
     unit_costs["Room"] = "Unit_Costs"
-    
     common_columns = list(unit_costs.columns.intersection(df.columns))
-    
     df = df.merge(unit_costs, how="outer", on=common_columns).reset_index(drop=True)
-    df.fillna('', inplace=True)
+    
     df.columns = df.columns.str.replace("SYM_Light_", "", regex=False)
     df = df.drop(columns=["entity_name"])
 
@@ -73,34 +70,25 @@ def make_table(cost_by_group):
     # Concatenate the row and the remaining DataFrame
     df_reordered = pandas.concat([row_to_bring_to_top.to_frame().T, remaining_df], ignore_index=True)
     
-    df = df_reordered
+    df = df_reordered    
     
-    df.to_csv('check.csv', index=False)
-
     totals = df.sum().reset_index().T
-
     totals = totals.reset_index(drop=True)
-
     totals.columns = totals.iloc[0]
     totals = totals.drop(index=0)
-
-
     totals["Room"] = "Totals"
+    df = pandas.concat([df, totals], ignore_index=True)
 
     totals = df.loc[df["Room"] == "Totals", [i for i in df.columns if i not in ["Room"]]].values
     unit_costs = df.loc[df["Room"] == "Unit_Costs", [i for i in df.columns if i not in ["Room"]]].values
 
-
     fixtures = pandas.DataFrame(totals * unit_costs)
-
     fixtures["Room"] = "Fixture_Costs"
-
     fixtures = fixtures[["Room"] + [col for col in fixtures.columns if col!="Room"]]
-
     fixtures.columns = df.columns
-
+   
     df = pandas.concat([df, fixtures], ignore_index=True)
-    
+    df.fillna('', inplace=True)
     return df
 
 
@@ -121,5 +109,5 @@ if __name__ == "__main__":
     dxf_file = file_upload()
     cost_by_group = get_count_by_group(dxf_file)
     display_table = make_table(cost_by_group)
-    df = editable_dataframe(display_table)
-    streamlit.dataframe(df)
+    # df = editable_dataframe(display_table)
+    streamlit.dataframe(display_table)
