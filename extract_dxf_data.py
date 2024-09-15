@@ -74,6 +74,7 @@ def make_table(cost_file, cost_by_group):
     unit_costs = unit_costs[1:].reset_index(drop=True)
     unit_costs.rename(columns={"entity_name": "Room"})
     unit_costs["Room"] = "Unit_Costs"
+    
     common_columns = list(unit_costs.columns.intersection(df.columns))
     df = df.merge(unit_costs, how="outer", on=common_columns).reset_index(drop=True)
     
@@ -126,9 +127,9 @@ if __name__ == "__main__":
     cost_by_group = get_count_by_group(dxf_file)
     display_table = make_table(cost_file, cost_by_group)
     # df = editable_dataframe(display_table)
-    # streamlit.dataframe(display_table)
-    with streamlit.expander("Click to edit and view full DataFrame"):
-        # Display editable dataframe in expander
-        edited_df = editable_dataframe(display_table)
-        streamlit.write("### Edited DataFrame")
-        streamlit.dataframe(edited_df)
+    streamlit.dataframe(display_table)
+    # with streamlit.expander("Click to edit and view full DataFrame"):
+    #     # Display editable dataframe in expander
+    #     edited_df = editable_dataframe(display_table)
+    #     streamlit.write("### Edited DataFrame")
+    #     streamlit.dataframe(edited_df)
