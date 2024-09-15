@@ -125,5 +125,10 @@ if __name__ == "__main__":
     cost_file = cost_file_upload()
     cost_by_group = get_count_by_group(dxf_file)
     display_table = make_table(cost_file, cost_by_group)
-    df = editable_dataframe(display_table)
-    streamlit.dataframe(display_table)
+    # df = editable_dataframe(display_table)
+    # streamlit.dataframe(display_table)
+    with streamlit.expander("Click to edit and view full DataFrame"):
+        # Display editable dataframe in expander
+        edited_df = editable_dataframe(display_table)
+        streamlit.write("### Edited DataFrame")
+        streamlit.dataframe(edited_df)

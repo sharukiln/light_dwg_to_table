@@ -24,7 +24,8 @@ def editable_dataframe(df):
         update_mode=GridUpdateMode.MODEL_CHANGED,
         fit_columns_on_grid_load=True,
         enable_enterprise_modules=False,
-        height=300,  # Customize height if needed
+        height=600, # Customize height if needed
+        width="100%",  
         reload_data=True
     )
     return grid_response['data']
