@@ -1,0 +1,32 @@
+[{
+    "entity_name": "SYM_Light_RD.01a",
+    "cost": 150
+},
+{
+    "entity_name": "SYM_Light_RD.02a",
+    "cost": 200
+},
+{
+    "entity_name": "SYM_Light_RD.03a",
+    "cost": 150
+},
+{
+    "entity_name": "SYM_Light_RD.04a",
+    "cost": 150
+},
+{
+    "entity_name": "SYM_Light_RA.01a",
+    "cost": 150
+},
+{
+    "entity_name": "SYM_Light_RA.02a",
+    "cost": 200
+},
+{
+    "entity_name": "SYM_Light_RA.03a",
+    "cost": 150
+},
+{
+    "entity_name": "SYM_Light_RW.01a",
+    "cost": 150
+}]
