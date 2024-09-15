@@ -23,6 +23,22 @@ def file_upload():
         streamlit.stop()
     
 
+def cost_file_upload():
+    uploaded_file = streamlit.file_uploader("Choose a json file", type="json")
+    # Create a temporary file
+    if uploaded_file is not None:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".dxf") as tmp_file:
+            # Write the uploaded file's content to the temporary file
+            tmp_file.write(uploaded_file.read())
+            temp_file_path = tmp_file.name
+
+        doc = load_json(temp_file_path)
+        return doc
+    else:
+        streamlit.write("Please upload a file.")
+        streamlit.stop()
+    
+
 def count_lights_in_group(dxf_file, group_name):
     
     light_count = {}
@@ -50,9 +66,9 @@ def count_lights_in_group(dxf_file, group_name):
     return light_count
 
 
-def make_table(cost_by_group):
+def make_table(cost_file, cost_by_group):
     df = pandas.DataFrame(cost_by_group).T.reset_index().rename(columns={'index': 'Room'})
-    unit_costs = load_json("config/bulb_cost_config.json")
+    unit_costs = cost_file
     unit_costs = pandas.DataFrame(unit_costs).T.reset_index().rename(columns={'index': 'Room'})
     unit_costs.columns = unit_costs.iloc[0]   # Make the first row the header
     unit_costs = unit_costs[1:].reset_index(drop=True)
@@ -71,7 +87,6 @@ def make_table(cost_by_group):
     df_reordered = pandas.concat([row_to_bring_to_top.to_frame().T, remaining_df], ignore_index=True)
     
     df = df_reordered    
-    
     totals = df.sum().reset_index().T
     totals = totals.reset_index(drop=True)
     totals.columns = totals.iloc[0]
@@ -107,7 +122,8 @@ def get_count_by_group(dxf_file):
 
 if __name__ == "__main__":
     dxf_file = file_upload()
+    cost_file = cost_file_upload()
     cost_by_group = get_count_by_group(dxf_file)
-    display_table = make_table(cost_by_group)
-    # df = editable_dataframe(display_table)
+    display_table = make_table(cost_file, cost_by_group)
+    df = editable_dataframe(display_table)
     streamlit.dataframe(display_table)
