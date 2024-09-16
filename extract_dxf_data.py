@@ -68,6 +68,7 @@ def count_lights_in_group(dxf_file, group_name):
 
 def make_table(cost_file, cost_by_group):
     df = pandas.DataFrame(cost_by_group).T.reset_index().rename(columns={'index': 'Room'})
+    
     unit_costs = cost_file
     unit_costs = pandas.DataFrame(unit_costs).T.reset_index().rename(columns={'index': 'Room'})
     unit_costs.columns = unit_costs.iloc[0]   # Make the first row the header
@@ -88,7 +89,7 @@ def make_table(cost_file, cost_by_group):
     df_reordered = pandas.concat([row_to_bring_to_top.to_frame().T, remaining_df], ignore_index=True)
     
     df = df_reordered    
-    totals = df.sum().reset_index().T
+    totals = df[df["Room"]!="Unit_Costs"].sum().reset_index().T
     totals = totals.reset_index(drop=True)
     totals.columns = totals.iloc[0]
     totals = totals.drop(index=0)
