@@ -68,7 +68,7 @@ def count_lights_in_group(dxf_file, group_name):
 
 def make_table(cost_file, cost_by_group):
     df = pandas.DataFrame(cost_by_group).T.reset_index().rename(columns={'index': 'Room'})
-    
+        
     unit_costs = cost_file
     unit_costs = pandas.DataFrame(unit_costs).T.reset_index().rename(columns={'index': 'Room'})
     unit_costs.columns = unit_costs.iloc[0]   # Make the first row the header
@@ -105,7 +105,7 @@ def make_table(cost_file, cost_by_group):
     fixtures.columns = df.columns
    
     df = pandas.concat([df, fixtures], ignore_index=True)
-    df.fillna('', inplace=True)
+    # df.fillna('', inplace=True)
     return df
 
 
@@ -123,14 +123,28 @@ def get_count_by_group(dxf_file):
     return count_by_group
 
 if __name__ == "__main__":
-    dxf_file = file_upload()
-    cost_file = cost_file_upload()
+    dxf_file = file_upload()  # Function to upload DXF file
+    cost_file = cost_file_upload()  # Function to upload cost file
+
+    # Process the uploaded files and calculate the cost by group
     cost_by_group = get_count_by_group(dxf_file)
     display_table = make_table(cost_file, cost_by_group)
-    # df = editable_dataframe(display_table)
+
+    # Show the table in a non-editable mode initially
     streamlit.dataframe(display_table)
-    # with streamlit.expander("Click to edit and view full DataFrame"):
-    #     # Display editable dataframe in expander
-    #     edited_df = editable_dataframe(display_table)
-    #     streamlit.write("### Edited DataFrame")
-    #     streamlit.dataframe(edited_df)
+
+    # Expander for editing the DataFrame
+    with streamlit.expander("Click to edit and view full DataFrame"):
+        # Create an editable version of the DataFrame using `st.experimental_data_editor` (streamlit feature)
+        edited_df = editable_dataframe(display_table)
+
+        # Show the edited DataFrame
+        streamlit.write("### Edited DataFrame")
+        streamlit.dataframe(edited_df)
+
+        # Recalculate based on the edited DataFrame
+        if streamlit.button("Recalculate Table"):
+            # Pass the edited_df back to the make_table function to recalculate
+            recalculated_table = make_table(cost_file, edited_df)
+            streamlit.write("### Recalculated Table")
+            streamlit.dataframe(recalculated_table)

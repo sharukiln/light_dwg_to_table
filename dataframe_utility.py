@@ -4,7 +4,9 @@ from st_aggrid import AgGrid, GridOptionsBuilder, DataReturnMode, GridUpdateMode
 
 
 def editable_dataframe(df):
+    # Create grid options from dataframe
     gb = GridOptionsBuilder.from_dataframe(df)
+    
     # Configure default column settings
     gb.configure_default_column(
         editable=True,
@@ -17,6 +19,7 @@ def editable_dataframe(df):
     gb.configure_default_column(editable=True)  # All columns editable
     grid_options = gb.build()
 
+    # Render the editable grid
     grid_response = AgGrid(
         df,
         gridOptions=grid_options,
@@ -24,8 +27,18 @@ def editable_dataframe(df):
         update_mode=GridUpdateMode.MODEL_CHANGED,
         fit_columns_on_grid_load=True,
         enable_enterprise_modules=False,
-        height=600, # Customize height if needed
+        height=600,  # Customize height if needed
         width="100%",  
         reload_data=True
     )
-    return grid_response['data']
+
+    # Extract the edited data from the grid
+    updated_df = pd.DataFrame(grid_response['data'])
+
+    # Convert the relevant columns to numeric (int) after editing
+    # Assuming all columns except "Room" should be numeric
+    for col in updated_df.columns:
+        if col != "Room":  # Replace "Room" with any column that should stay non-numeric
+            updated_df[col] = pd.to_numeric(updated_df[col], errors='coerce').astype("Int64")
+    
+    return updated_df
