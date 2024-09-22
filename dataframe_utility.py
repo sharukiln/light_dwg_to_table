@@ -39,6 +39,6 @@ def editable_dataframe(df):
     # Assuming all columns except "Room" should be numeric
     for col in updated_df.columns:
         if col != "Room":  # Replace "Room" with any column that should stay non-numeric
-            updated_df[col] = pd.to_numeric(updated_df[col], errors='coerce').astype("Int64")
+            updated_df[col] = pd.to_numeric(updated_df[col], errors='coerce').astype("float")
     
     return updated_df

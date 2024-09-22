@@ -65,10 +65,60 @@ def count_lights_in_group(dxf_file, group_name):
     
     return light_count
 
+def recalculate_df(cost_file, edited_df):
+    # Copy the edited DataFrame to avoid modifying it in place
+    df = edited_df.copy()
+
+    # Drop the existing Totals and Fixture_Costs rows before recalculating
+    df = df[df["Room"].isin(["Totals", "Fixture_Costs"]) == False]
+
+    # Recalculate totals for each column except "Room"
+    numeric_columns = [col for col in df.columns if col != "Room"]
+    
+    # Make sure to filter out any non-numeric columns for safety
+    df[numeric_columns] = df[numeric_columns].apply(pandas.to_numeric, errors='coerce')
+    
+    totals = df.loc[df["Room"] != "Unit_Costs", numeric_columns].sum().to_frame().T
+    totals["Room"] = "Totals"
+
+    # Append recalculated totals back to the DataFrame
+    df = pandas.concat([df, totals], ignore_index=True)
+
+    # Extract unit costs for recalculating fixture costs
+    unit_costs = df.loc[df["Room"] == "Unit_Costs", numeric_columns].values
+    totals = df.loc[(df["Room"] == "Totals"), numeric_columns].values
+
+    # If unit costs or totals are missing, return the DataFrame as is
+    if unit_costs.size == 0 or totals.size == 0:
+        streamlit.warning("Unit costs or totals are missing. No recalculations made.")
+        return df
+
+    # Recalculate fixture costs based on new totals and unit costs
+    fixtures = pandas.DataFrame(totals * unit_costs)
+
+    # Ensure the number of columns in 'fixtures' matches the original numeric_columns
+    if fixtures.shape[1] == len(numeric_columns):
+        fixtures.columns = numeric_columns
+    else:
+        # Handle mismatch in column count (if necessary)
+        streamlit.error("Column mismatch during fixture calculation.")
+        return df
+
+    fixtures["Room"] = "Fixture_Costs"
+    
+    # Reorder columns to ensure "Room" is the first column
+    fixtures = fixtures[["Room"] + numeric_columns]
+
+    # Append the recalculated fixture costs to the DataFrame
+    df = pandas.concat([df, fixtures], ignore_index=True)
+
+    return df
+
 
 def make_table(cost_file, cost_by_group):
+
     df = pandas.DataFrame(cost_by_group).T.reset_index().rename(columns={'index': 'Room'})
-        
+ 
     unit_costs = cost_file
     unit_costs = pandas.DataFrame(unit_costs).T.reset_index().rename(columns={'index': 'Room'})
     unit_costs.columns = unit_costs.iloc[0]   # Make the first row the header
@@ -131,7 +181,7 @@ if __name__ == "__main__":
     display_table = make_table(cost_file, cost_by_group)
 
     # Show the table in a non-editable mode initially
-    streamlit.dataframe(display_table)
+    # streamlit.dataframe(display_table.fillna(""))
 
     # Expander for editing the DataFrame
     with streamlit.expander("Click to edit and view full DataFrame"):
@@ -139,12 +189,12 @@ if __name__ == "__main__":
         edited_df = editable_dataframe(display_table)
 
         # Show the edited DataFrame
-        streamlit.write("### Edited DataFrame")
-        streamlit.dataframe(edited_df)
+        # streamlit.write("### Edited DataFrame")
+        # streamlit.dataframe(edited_df)
 
         # Recalculate based on the edited DataFrame
         if streamlit.button("Recalculate Table"):
             # Pass the edited_df back to the make_table function to recalculate
-            recalculated_table = make_table(cost_file, edited_df)
+            recalculated_table = recalculate_df(cost_file, edited_df)
             streamlit.write("### Recalculated Table")
-            streamlit.dataframe(recalculated_table)
+            streamlit.dataframe(recalculated_table.fillna(""))
